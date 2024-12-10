@@ -10,7 +10,7 @@ use tokio_retry::{
 };
 
 // Limit the timeout for fetching the private DNS name of the EC2 instance to 5 minutes.
-const FETCH_PRIVATE_DNS_NAME_TIMEOUT: Duration = Duration::from_secs(300);
+const FETCH_PRIVATE_DNS_NAME_TIMEOUT: Duration = Duration::from_secs(200);
 // Fibonacci backoff base duration when retrying requests
 const FIBONACCI_BACKOFF_BASE_DURATION_MILLIS: u64 = 200;
 

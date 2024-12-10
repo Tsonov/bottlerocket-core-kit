@@ -179,12 +179,16 @@ async fn generate_max_pods(
     client: &mut ImdsClient,
     aws_k8s_info: &mut SettingsViewDelta,
 ) -> Result<()> {
+    info!("generate_max_pods::start");
     if settings_view_get!(aws_k8s_info.kubernetes.max_pods).is_some() {
+        info!("generate_max_pods::already set");
         return Ok(());
     }
     if let Ok(max_pods) = get_max_pods(client).await {
+        info!("generate_max_pods::setting value in settings");
         settings_view_set!(aws_k8s_info.kubernetes.max_pods = max_pods);
     }
+    info!("generate_max_pods::done");
     Ok(())
 }
 
@@ -279,7 +283,7 @@ async fn get_eks_network_config(aws_k8s_info: &SettingsViewDelta) -> Result<Opti
         settings_view_get!(aws_k8s_info.kubernetes.cluster_name),
     ) {
         info!("get_eks_network_config::getting cluster network config");
-        info!("get_eks_network_config::call data - https_proxy {}, no_proxy {}, region {}, clusterName {}". aws_k8s_info.network.https_proxy, aws_k8s_info.network.no_proxy, region, cluster_name);
+        info!("get_eks_network_config::call data - https_proxy {}, no_proxy {}, region {}, clusterName {}", aws_k8s_info.network.https_proxy, aws_k8s_info.network.no_proxy, region, cluster_name);
         if let Ok(config) = eks::get_cluster_network_config(
             region,
             cluster_name,
@@ -557,7 +561,7 @@ async fn run() -> Result<()> {
     info!("Creating temporary directory");
     let temp_dir = tempfile::tempdir().context(error::TempdirSnafu)?;
     let aws_config_file_path = temp_dir.path().join(AWS_CONFIG_FILE);
-    info!("Saving aws settings to {}", aws_config_file_path);
+    info!("Saving aws settings to {}", aws_config_file_path.display());
     set_aws_config(&aws_k8s_info, Path::new(&aws_config_file_path))?;
 
     info!("Generating cluster DNS IP");

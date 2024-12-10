@@ -6,7 +6,7 @@ use snafu::{OptionExt, ResultExt, Snafu};
 use std::time::Duration;
 
 // Limit the timeout for the EKS describe cluster API call to 5 minutes
-const EKS_DESCRIBE_CLUSTER_TIMEOUT: Duration = Duration::from_secs(300);
+const EKS_DESCRIBE_CLUSTER_TIMEOUT: Duration = Duration::from_secs(100);
 
 pub(crate) type ClusterNetworkConfig = KubernetesNetworkConfigResponse;
 
