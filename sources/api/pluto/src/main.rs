@@ -508,9 +508,11 @@ async fn run() -> Result<()> {
 
     info!("Creating IMDS client");
     let mut client = ImdsClient::new();
-    info!("Gettung EKS metadata from bottlerocket api");
+    info!("Getting EKS metadata from bottlerocket api");
     let current_settings = api::get_aws_k8s_info().await.context(error::AwsInfoSnafu)?;
     let mut aws_k8s_info = SettingsViewDelta::from_api_response(current_settings);
+    info!("aws_k8s_info {:?}", aws_k8s_info);
+
 
 
     info!("Installing AWS_LC cryptographic provider");
