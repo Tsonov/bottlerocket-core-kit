@@ -243,6 +243,7 @@ async fn generate_cluster_dns_ip(
     }
 
     // Retrieve the kubernetes network configuration for the EKS cluster
+    info!("generate_cluster_dns_ip::retrieving EKS network configuration");
     let ip_addr = if let Some(ip) = get_eks_network_config(aws_k8s_info).await? {
         ip.clone()
     } else {
@@ -265,14 +266,11 @@ async fn generate_cluster_dns_ip(
 /// EKS Cluster
 async fn get_eks_network_config(aws_k8s_info: &SettingsViewDelta) -> Result<Option<String>> {
     info!("get_eks_network_config::start");
-    let https_proxy = aws_k8s_info.network.https_proxy;
-    let no_proxy = aws_k8s_info.network.no_proxy;
     if let (Some(region), Some(cluster_name)) = (
         settings_view_get!(aws_k8s_info.aws.region),
         settings_view_get!(aws_k8s_info.kubernetes.cluster_name),
     ) {
         info!("get_eks_network_config::getting cluster network config");
-        info!("get_eks_network_config::call data - https_proxy {}, no_proxy {}, region {}, clusterName {}", https_proxy, no_proxy, region, cluster_name);
         if let Ok(config) = eks::get_cluster_network_config(
             region,
             cluster_name,
