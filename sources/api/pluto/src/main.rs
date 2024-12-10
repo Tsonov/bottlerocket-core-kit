@@ -497,6 +497,8 @@ async fn run() -> Result<()> {
     // SimpleLogger will send errors to stderr and anything less to stdout.
     SimpleLogger::init(LevelFilter::Trace, LogConfig::default()).context(error::LoggerSnafu)?;
 
+    info!("Starting pluto")
+
     let mut client = ImdsClient::new();
     let current_settings = api::get_aws_k8s_info().await.context(error::AwsInfoSnafu)?;
     let mut aws_k8s_info = SettingsViewDelta::from_api_response(current_settings);
