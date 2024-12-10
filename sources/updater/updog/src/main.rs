@@ -445,7 +445,7 @@ fn parse_args(args: std::env::Args) -> Arguments {
 
     Arguments {
         subcommand: subcommand.unwrap_or_else(|| usage()),
-        log_level: log_level.unwrap_or(LevelFilter::Info),
+        log_level: log_level.unwrap_or(LevelFilter::Debug),
         json,
         ignore_waves,
         force_version: update_version,

@@ -281,7 +281,7 @@ fn parse_args(args: env::Args) -> Args {
 
     Args {
         subcommand: subcommand.unwrap_or_else(|| usage_msg("Must specify a subcommand.")),
-        log_level: log_level.unwrap_or(LevelFilter::Info),
+        log_level: log_level.unwrap_or(LevelFilter::Debug),
         config_path: config_path.unwrap_or_else(|| DEFAULT_CONFIG_PATH.to_string()),
     }
 }

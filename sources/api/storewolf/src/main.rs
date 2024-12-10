@@ -535,7 +535,7 @@ fn parse_args(args: env::Args) -> Args {
         data_store_base_path: data_store_base_path.unwrap_or_else(|| usage()),
         inventory_symlink_path: inventory_symlink_path.unwrap_or_else(|| usage()),
         inventory_file_path: inventory_file_path.unwrap_or(INVENTORY_PATH.to_string()),
-        log_level: log_level.unwrap_or(LevelFilter::Info),
+        log_level: log_level.unwrap_or(LevelFilter::Debug),
         version,
     }
 }

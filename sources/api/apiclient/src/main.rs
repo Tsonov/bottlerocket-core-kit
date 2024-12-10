@@ -34,7 +34,7 @@ struct Args {
 impl Default for Args {
     fn default() -> Self {
         Self {
-            log_level: LevelFilter::Info,
+            log_level: LevelFilter::Trace,
             socket_path: constants::API_SOCKET.to_string(),
         }
     }

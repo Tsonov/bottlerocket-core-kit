@@ -3,7 +3,7 @@ use log::LevelFilter;
 use std::path::PathBuf;
 
 fn default_logging() -> LevelFilter {
-    LevelFilter::Info
+    LevelFilter::Debug
 }
 
 /// Command line arguments for the metricdog program.
