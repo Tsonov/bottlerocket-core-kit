@@ -497,25 +497,37 @@ async fn run() -> Result<()> {
     // SimpleLogger will send errors to stderr and anything less to stdout.
     SimpleLogger::init(LevelFilter::Trace, LogConfig::default()).context(error::LoggerSnafu)?;
 
-    info!("Starting pluto")
+    info!("Starting pluto");
 
+    info!("Creating IMDS client");
     let mut client = ImdsClient::new();
+    info!("Gettung EKS metadata from bottlerocket api");
     let current_settings = api::get_aws_k8s_info().await.context(error::AwsInfoSnafu)?;
     let mut aws_k8s_info = SettingsViewDelta::from_api_response(current_settings);
 
+
+    info!("Installing AWS_LC cryptographic provider");
     let _ = rustls::crypto::aws_lc_rs::default_provider().install_default();
 
+    info!("Creating temporary directory");
     let temp_dir = tempfile::tempdir().context(error::TempdirSnafu)?;
     let aws_config_file_path = temp_dir.path().join(AWS_CONFIG_FILE);
+    info!("Saving aws settings to {}", aws_config_file_path)
     set_aws_config(&aws_k8s_info, Path::new(&aws_config_file_path))?;
 
+    info!("Generating cluster DNS IP");
     generate_cluster_dns_ip(&mut client, &mut aws_k8s_info).await?;
+    info!("Generating node IP");
     generate_node_ip(&mut client, &mut aws_k8s_info).await?;
+    info!("Generating max modes");
     generate_max_pods(&mut client, &mut aws_k8s_info).await?;
+    info!("Generating provider ID");
     generate_provider_id(&mut client, &mut aws_k8s_info).await?;
+    info!("Generating node name");
     generate_node_name(&mut client, &mut aws_k8s_info).await?;
 
     if let Some(k8s_settings) = &aws_k8s_info.delta().kubernetes {
+        info!("There are kubernetes settings to update");
         let generated_settings = serde_json::json!({
             "kubernetes": serde_json::to_value(k8s_settings).context(error::SerializeSnafu)?
         });
@@ -525,11 +537,13 @@ async fn run() -> Result<()> {
             constants::API_SETTINGS_URI,
             constants::LAUNCH_TRANSACTION
         );
+        info!("Running API call with data {}", json_str.as_str());
         api::client_command(&["raw", "-m", "PATCH", "-u", uri, "-d", json_str.as_str()])
             .await
             .context(error::SetFailureSnafu)?;
     }
 
+    info!("Pluto run finished");
     Ok(())
 }
 
@@ -539,9 +553,11 @@ async fn run() -> Result<()> {
 #[tokio::main]
 async fn main() {
     if let Err(e) = run().await {
+        info!("Pluto main encountered error");
         eprintln!("{}", e);
         process::exit(1);
     }
+    info!("Pluto main finished");
 }
 
 #[cfg(test)]
