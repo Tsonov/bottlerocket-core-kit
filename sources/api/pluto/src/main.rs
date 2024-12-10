@@ -30,7 +30,7 @@ Pluto returns a special exit code of 2 to inform `sundog` that a setting should 
 example, if `max-pods` cannot be generated, we want `sundog` to skip it without failing since a
 reasonable default is available.
 */
-// #[macro_use]
+#[macro_use]
 extern crate log;
 
 mod api;
@@ -189,6 +189,7 @@ async fn generate_max_pods(
 }
 
 async fn get_max_pods(client: &mut ImdsClient) -> Result<u32> {
+    info!("get_max_pods::start");
     let instance_type = client
         .fetch_instance_type()
         .await
@@ -196,19 +197,24 @@ async fn get_max_pods(client: &mut ImdsClient) -> Result<u32> {
         .context(error::ImdsNoneSnafu {
             what: "instance_type",
         })?;
+    info!("get_max_pods::got instance type {}", instance_type);
 
+    info!("get_max_pods::calling get from file {}", ENI_MAX_PODS_OVERRIDE_PATH);
     if let Ok(max_pods) = get_max_pods_from_file(&instance_type, ENI_MAX_PODS_OVERRIDE_PATH).await {
         return Ok(max_pods);
     }
+    info!("get_max_pods::calling get from file {}", ENI_MAX_PODS_PATH);
     get_max_pods_from_file(&instance_type, ENI_MAX_PODS_PATH).await
 }
 
 // Returns the max-pods as determined by the specified instance type and max-pods file
 async fn get_max_pods_from_file(instance_type: &str, pods_file: &'static str) -> Result<u32> {
+    info!("get_max_pods_from_file::start");
     // Find the corresponding maximum number of pods supported by this instance type
     let file = BufReader::new(
         File::open(pods_file).context(error::EniMaxPodsFileSnafu { path: pods_file })?,
     );
+    info!("get_max_pods_from_file::reading max_pods file");
     for line in file.lines() {
         let line = line.context(error::IoReadLineSnafu)?;
         // Skip the comments in the file
@@ -221,6 +227,7 @@ async fn get_max_pods_from_file(instance_type: &str, pods_file: &'static str) ->
             return setting.parse().context(error::ParseToU32Snafu { setting });
         }
     }
+    info!("get_max_pods_from_file::done");
     error::NoInstanceTypeMaxPodsSnafu { instance_type }.fail()
 }
 
@@ -234,19 +241,24 @@ async fn generate_cluster_dns_ip(
     client: &mut ImdsClient,
     aws_k8s_info: &mut SettingsViewDelta,
 ) -> Result<()> {
+    info!("generate_cluster_dns_ip::start");
     if settings_view_get!(aws_k8s_info.kubernetes.cluster_dns_ip).is_some() {
+        info!("generate_cluster_dns_ip::already set");
         return Ok(());
     }
 
     // Retrieve the kubernetes network configuration for the EKS cluster
+    info!("generate_cluster_dns_ip::retrieving EKS network configuration");
     let ip_addr = if let Some(ip) = get_eks_network_config(aws_k8s_info).await? {
         ip.clone()
     } else {
+        info!("generate_cluster_dns_ip::unable to obtain EKS network config, use default values");
         // If we were unable to obtain or parse the cidr range from EKS, fallback to one of two default
         // values based on the IPv4 cidr range of our primary network interface
         get_ipv4_cluster_dns_ip_from_imds_mac(client).await?
     };
 
+    info!("generate_cluster_dns_ip::setting cluster DNS IP in settings");
     settings_view_set!(
         aws_k8s_info.kubernetes.cluster_dns_ip = KubernetesClusterDnsIp::Scalar(
             IpAddr::from_str(ip_addr.as_str()).context(error::BadIpSnafu {
@@ -254,16 +266,20 @@ async fn generate_cluster_dns_ip(
             })?,
         )
     );
+    info!("generate_cluster_dns_ip::done");
     Ok(())
 }
 
 /// Retrieves the ip address from the kubernetes network configuration for the
 /// EKS Cluster
 async fn get_eks_network_config(aws_k8s_info: &SettingsViewDelta) -> Result<Option<String>> {
+    info!("get_eks_network_config::start");
     if let (Some(region), Some(cluster_name)) = (
         settings_view_get!(aws_k8s_info.aws.region),
         settings_view_get!(aws_k8s_info.kubernetes.cluster_name),
     ) {
+        info!("get_eks_network_config::getting cluster network config");
+        info!("get_eks_network_config::call data - https_proxy {}, no_proxy {}, region {}, clusterName {}". aws_k8s_info.network.https_proxy, aws_k8s_info.network.no_proxy, region, cluster_name);
         if let Ok(config) = eks::get_cluster_network_config(
             region,
             cluster_name,
@@ -281,6 +297,7 @@ async fn get_eks_network_config(aws_k8s_info: &SettingsViewDelta) -> Result<Opti
             }
         }
     }
+    info!("get_eks_network_config::done");
     Ok(None)
 }
 
@@ -291,6 +308,7 @@ async fn get_eks_network_config(aws_k8s_info: &SettingsViewDelta) -> Result<Opti
 /// ```
 /// [this]: https://github.com/awslabs/amazon-eks-ami/blob/732b6b2/files/bootstrap.sh#L335
 fn get_dns_from_ipv4_cidr(cidr: &str) -> Result<String> {
+    info!("get_dns_from_ipv4_cidr::start");
     let mut split: Vec<&str> = cidr.split('.').collect();
     ensure!(
         split.len() == 4,
@@ -300,6 +318,7 @@ fn get_dns_from_ipv4_cidr(cidr: &str) -> Result<String> {
         }
     );
     split[3] = "10";
+    info!("get_dns_from_ipv4_cidr::done");
     Ok(split.join("."))
 }
 
@@ -349,16 +368,21 @@ async fn generate_node_ip(
     client: &mut ImdsClient,
     aws_k8s_info: &mut SettingsViewDelta,
 ) -> Result<()> {
+    info!("generate_node_ip::start");
     if settings_view_get!(aws_k8s_info.kubernetes.node_ip).is_some() {
+        info!("generate_node_ip::already provided");
         return Ok(());
     }
+    info!("generate_node_ip::calling generate cluster DNS IP");
     // Ensure that this was set in case changes to main occur
     generate_cluster_dns_ip(client, aws_k8s_info).await?;
+    info!("generate_node_ip::getting cluster DNS from settings");
     let cluster_dns_ip = settings_view_get!(aws_k8s_info.kubernetes.cluster_dns_ip)
         .and_then(|x| x.iter().next())
         .context(error::NoIpSnafu)?;
     // If the cluster DNS IP is an IPv4 address, retrieve the IPv4 address for the instance.
     // If the cluster DNS IP is an IPv6 address, retrieve the IPv6 address for the instance.
+    info!("generate_node_ip::getting node IP based on ipv4/ipv6");
     let node_ip = match cluster_dns_ip {
         IpAddr::V4(_) => client
             .fetch_local_ipv4_address()
@@ -375,12 +399,14 @@ async fn generate_node_ip(
                 what: "ipv6s associated with primary network interface",
             }),
     }?;
+    info!("generate_node_ip::setting node IP in settings");
     settings_view_set!(
         aws_k8s_info.kubernetes.node_ip =
             IpAddr::from_str(node_ip.as_str()).context(error::BadIpSnafu {
                 ip: node_ip.clone(),
             })?
     );
+    info!("generate_node_ip::done");
     Ok(())
 }
 
@@ -389,10 +415,14 @@ async fn generate_provider_id(
     client: &mut ImdsClient,
     aws_k8s_info: &mut SettingsViewDelta,
 ) -> Result<()> {
+    info!("generate_provider_id::start");
     if settings_view_get!(aws_k8s_info.kubernetes.provider_id).is_some() {
+
+    info!("generate_provider_id::kubernetes provider ID already set");
         return Ok(());
     }
 
+    info!("generate_provider_id::getting instance ID from Imds");
     let instance_id = client
         .fetch_instance_id()
         .await
@@ -401,17 +431,21 @@ async fn generate_provider_id(
             what: "instance ID",
         })?;
 
+    info!("generate_provider_id::getting zone");
     let zone = client
         .fetch_zone()
         .await
         .context(error::ImdsRequestSnafu)?
         .context(error::ImdsNoneSnafu { what: "zone" })?;
 
+    info!("generate_provider_id::setting instance ID in settings");
     settings_view_set!(
         aws_k8s_info.kubernetes.provider_id = format!("aws:///{}/{}", zone, instance_id)
             .try_into()
             .context(error::InvalidUrlSnafu)?
     );
+
+    info!("generate_provider_id::done");
     Ok(())
 }
 
@@ -420,8 +454,10 @@ async fn generate_node_name(
     client: &mut ImdsClient,
     aws_k8s_info: &mut SettingsViewDelta,
 ) -> Result<()> {
+    info!("generate_node_name start");
     // hostname override provided, so we do nothing regardless of the override source
     if settings_view_get!(aws_k8s_info.kubernetes.hostname_override).is_some() {
+        info!("Hostname override exists, nothing to do in generate_node_name");
         return Ok(());
     }
 
@@ -431,8 +467,11 @@ async fn generate_node_name(
         None => return Ok(()),
         Some(hostname_source) => hostname_source,
     };
+    info!("Generating hostname from source {}", hostname_source);
 
+    info!("Getting region");
     let region = settings_view_get!(aws_k8s_info.aws.region).context(error::AwsRegionSnafu)?;
+    info!("Getting instance ID");
     let instance_id = client
         .fetch_instance_id()
         .await
@@ -443,6 +482,7 @@ async fn generate_node_name(
 
     match hostname_source {
         KubernetesHostnameOverrideSource::PrivateDNSName => {
+            info!("Getting hostname from ec2::get_private_dns_name");
             let hostname_override = ec2::get_private_dns_name(
                 region,
                 &instance_id,
@@ -454,17 +494,22 @@ async fn generate_node_name(
             .try_into()
             .context(error::InvalidHostnameSnafu)?;
 
+            info!("Setting hostname in settings");
             settings_view_set!(aws_k8s_info.kubernetes.hostname_override = hostname_override);
+            info!("Set hostname in settings")
         }
         KubernetesHostnameOverrideSource::InstanceID => {
+            info!("Getting hostname from kubernetesHostnameOverrideSource and setting in settings");
             settings_view_set!(
                 aws_k8s_info.kubernetes.hostname_override = instance_id
                     .try_into()
                     .context(error::InvalidHostnameSnafu)?
             );
+            info!("Set hostname");
         }
     }
 
+    info!("generate_node_name done");
     Ok(())
 }
 
@@ -512,7 +557,7 @@ async fn run() -> Result<()> {
     info!("Creating temporary directory");
     let temp_dir = tempfile::tempdir().context(error::TempdirSnafu)?;
     let aws_config_file_path = temp_dir.path().join(AWS_CONFIG_FILE);
-    info!("Saving aws settings to {}", aws_config_file_path)
+    info!("Saving aws settings to {}", aws_config_file_path);
     set_aws_config(&aws_k8s_info, Path::new(&aws_config_file_path))?;
 
     info!("Generating cluster DNS IP");
@@ -537,7 +582,7 @@ async fn run() -> Result<()> {
             constants::API_SETTINGS_URI,
             constants::LAUNCH_TRANSACTION
         );
-        info!("Running API call with data {}", json_str.as_str());
+        info!("Running API call {} with data {}", uri, json_str.as_str());
         api::client_command(&["raw", "-m", "PATCH", "-u", uri, "-d", json_str.as_str()])
             .await
             .context(error::SetFailureSnafu)?;
