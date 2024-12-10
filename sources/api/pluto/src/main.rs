@@ -30,6 +30,8 @@ Pluto returns a special exit code of 2 to inform `sundog` that a setting should 
 example, if `max-pods` cannot be generated, we want `sundog` to skip it without failing since a
 reasonable default is available.
 */
+#[macro_use]
+extern crate log;
 
 mod api;
 mod aws;
@@ -49,6 +51,7 @@ use std::path::Path;
 use std::str::FromStr;
 use std::string::String;
 use std::{env, process};
+use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 
 // This is the default DNS unless our CIDR block begins with "10."
 const DEFAULT_DNS_CLUSTER_IP: &str = "10.100.0.10";
@@ -162,6 +165,9 @@ mod error {
 
         #[snafu(display("Unable to create tempdir: {}", source))]
         Tempdir { source: std::io::Error },
+
+        #[snafu(display("Logger setup error: {}", source))]
+        Logger { source: log::SetLoggerError },
     }
 }
 
@@ -488,6 +494,9 @@ fn set_aws_config(aws_k8s_info: &SettingsViewDelta, filepath: &Path) -> Result<(
 }
 
 async fn run() -> Result<()> {
+    // SimpleLogger will send errors to stderr and anything less to stdout.
+    SimpleLogger::init(LevelFilter::Trace, LogConfig::default()).context(error::LoggerSnafu)?;
+
     let mut client = ImdsClient::new();
     let current_settings = api::get_aws_k8s_info().await.context(error::AwsInfoSnafu)?;
     let mut aws_k8s_info = SettingsViewDelta::from_api_response(current_settings);

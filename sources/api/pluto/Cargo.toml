@@ -35,6 +35,8 @@ snafu.workspace = true
 tempfile.workspace = true
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 tokio-retry.workspace = true
+log.workspace = true
+simplelog.workspace = true
 
 [build-dependencies]
 generate-readme.workspace = true
