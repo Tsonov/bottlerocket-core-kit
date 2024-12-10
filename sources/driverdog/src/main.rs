@@ -428,7 +428,7 @@ where
 }
 
 fn setup_logger(args: &Args) -> Result<()> {
-    let log_level = args.log_level.unwrap_or(LevelFilter::Info);
+    let log_level = args.log_level.unwrap_or(LevelFilter::Debug);
     SimpleLogger::init(log_level, LogConfig::default()).context(error::LoggerSnafu)
 }
 

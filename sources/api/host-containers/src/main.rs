@@ -317,7 +317,7 @@ fn parse_args(args: env::Args) -> Args {
     }
 
     Args {
-        log_level: log_level.unwrap_or(LevelFilter::Info),
+        log_level: log_level.unwrap_or(LevelFilter::Debug),
         config_path: config_path.unwrap_or_else(|| CONFIG_FILE.into()),
     }
 }

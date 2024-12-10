@@ -273,7 +273,7 @@ struct TopLevel {
 
 fn main_inner() -> Result<()> {
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(LevelFilter::Info, LogConfig::default()).context(error::LoggerSnafu)?;
+    SimpleLogger::init(LevelFilter::Debug, LogConfig::default()).context(error::LoggerSnafu)?;
 
     let cmd: TopLevel = argh::from_env();
     match cmd.cmd {

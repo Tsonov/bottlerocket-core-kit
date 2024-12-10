@@ -28,7 +28,7 @@ mod warmpool;
 /// Returns information gathered from the AWS instance metadata service (IMDS).
 #[derive(FromArgs, Debug)]
 struct Args {
-    #[argh(option, default = "LevelFilter::Info")]
+    #[argh(option, default = "LevelFilter::Debug")]
     /// filter level for log messages
     log_level: LevelFilter,
 

@@ -19,7 +19,7 @@ mod clirequirements;
 #[derive(Debug, FromArgs)]
 struct Args {
     /// log-level trace|debug|info|warn|error
-    #[argh(option, default = "LevelFilter::Info")]
+    #[argh(option, default = "LevelFilter::Debug")]
     log_level: LevelFilter,
 
     /// path to Bottlerocket API socket

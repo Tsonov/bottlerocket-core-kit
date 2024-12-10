@@ -59,7 +59,7 @@ const NONE: Option<&'static [u8]> = None;
 /// Stores arguments
 #[derive(FromArgs, PartialEq, Debug)]
 struct Args {
-    #[argh(option, default = "LevelFilter::Info", short = 'l')]
+    #[argh(option, default = "LevelFilter::Debug", short = 'l')]
     /// log-level trace|debug|info|warn|error
     log_level: LevelFilter,
     #[argh(option, default = "PathBuf::from(DEFAULT_CONFIG_FILE)", short = 'c')]

@@ -87,7 +87,7 @@ fn parse_args(args: env::Args) -> Args {
     }
 
     Args {
-        log_level: log_level.unwrap_or(LevelFilter::Info),
+        log_level: log_level.unwrap_or(LevelFilter::Debug),
         socket_path: socket_path.unwrap_or_else(|| constants::API_SOCKET.to_string()),
     }
 }
