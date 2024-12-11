@@ -109,7 +109,7 @@ fn parse_args(args: env::Args) -> Args {
     Args {
         daemon,
         mode,
-        log_level: log_level.unwrap_or(LevelFilter::Trace),
+        log_level: log_level.unwrap_or(LevelFilter::Debug),
         socket_path: socket_path.unwrap_or_else(|| constants::API_SOCKET.to_string()),
     }
 }
