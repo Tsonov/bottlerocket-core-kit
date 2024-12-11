@@ -1,5 +1,9 @@
 schema-version = 1
+<<<<<<< HEAD
 release-version = "5.0.0"
+=======
+release-version = "4.0.2"
+>>>>>>> 8b8cf6c7 (try again)
 
 [vendor.bottlerocket]
 registry = "public.ecr.aws/bottlerocket"
@@ -9,9 +13,9 @@ name = "bottlerocket-sdk"
 version = "0.50.0"
 vendor = "bottlerocket"
 
-[vendor.cast]
-registry = "028075177508.dkr.ecr.eu-central-1.amazonaws.com"
-[[kit]]
-name = "bottlerocket-core-kit" # Name of your ECR repo
-version = "4.0.1" # your version tag you want to test
-vendor = "cast"
+#[vendor.cast]
+#registry = "028075177508.dkr.ecr.eu-central-1.amazonaws.com"
+#[[kit]]
+#name = "bottlerocket-core-kit" # Name of your ECR repo
+#version = "4.0.2" # your version tag you want to test
+#vendor = "cast"
