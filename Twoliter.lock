@@ -1,9 +1,20 @@
 schema-version = 1
-kit = []
 
 [sdk]
 name = "bottlerocket-sdk"
 version = "0.50.0"
 vendor = "bottlerocket"
+<<<<<<< HEAD
 source = "public.ecr.aws/bottlerocket/bottlerocket-sdk:v0.50.0"
 digest = "Rjpy/gVgBhU/B696xaK1Y4/drz4pNJu+fyyZSIk9oLE="
+=======
+source = "public.ecr.aws/bottlerocket/bottlerocket-sdk:v0.47.0"
+digest = "cKFZsWoMaWa/emD2I6I5TMCPMoHTnGH6X3CpPVH9VBg="
+
+[[kit]]
+name = "bottlerocket-core-kit"
+version = "4.0.1"
+vendor = "cast"
+source = "028075177508.dkr.ecr.eu-central-1.amazonaws.com/bottlerocket-core-kit:v4.0.1"
+digest = "Yv/C+7snJDBQExlEms46bjmn6n4QiTtcdQb5buPnLAU="
+>>>>>>> 20a2e31e (Making it run)
