@@ -521,7 +521,6 @@ async fn run() -> Result<()> {
     info!("Creating temporary directory");
     let temp_dir = tempfile::tempdir().context(error::TempdirSnafu)?;
     let aws_config_file_path = temp_dir.path().join(AWS_CONFIG_FILE);
-    info!("Saving aws settings to {}", aws_config_file_path)
     set_aws_config(&aws_k8s_info, Path::new(&aws_config_file_path))?;
 
     info!("Generating cluster DNS IP");
