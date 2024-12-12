@@ -30,7 +30,7 @@ Pluto returns a special exit code of 2 to inform `sundog` that a setting should 
 example, if `max-pods` cannot be generated, we want `sundog` to skip it without failing since a
 reasonable default is available.
 */
-// #[macro_use]
+#[macro_use]
 extern crate log;
 
 mod api;
