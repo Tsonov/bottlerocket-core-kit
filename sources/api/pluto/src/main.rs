@@ -502,7 +502,7 @@ fn set_aws_config(aws_k8s_info: &SettingsViewDelta, filepath: &Path) -> Result<(
 
 async fn run() -> Result<()> {
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(LevelFilter::Trace, LogConfig::default()).context(error::LoggerSnafu)?;
+    SimpleLogger::init(LevelFilter::Debug, LogConfig::default()).context(error::LoggerSnafu)?;
 
     info!("Starting pluto");
 
