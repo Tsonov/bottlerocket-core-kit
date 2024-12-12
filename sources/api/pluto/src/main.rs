@@ -511,7 +511,7 @@ async fn run() -> Result<()> {
     info!("Getting EKS metadata from bottlerocket api");
     let current_settings = api::get_aws_k8s_info().await.context(error::AwsInfoSnafu)?;
     let mut aws_k8s_info = SettingsViewDelta::from_api_response(current_settings);
-    info!("aws_k8s_info {:?}", aws_k8s_info);
+    //info!("aws_k8s_info {:?}", aws_k8s_info);
 
 
 
@@ -545,7 +545,7 @@ async fn run() -> Result<()> {
             constants::API_SETTINGS_URI,
             constants::LAUNCH_TRANSACTION
         );
-        info!("Running API call with data {}", json_str.as_str());
+        //info!("Running API call with data {}", json_str.as_str());
         api::client_command(&["raw", "-m", "PATCH", "-u", uri, "-d", json_str.as_str()])
             .await
             .context(error::SetFailureSnafu)?;
