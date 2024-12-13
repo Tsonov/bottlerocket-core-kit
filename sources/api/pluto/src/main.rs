@@ -162,6 +162,9 @@ mod error {
 
         #[snafu(display("Unable to create tempdir: {}", source))]
         Tempdir { source: std::io::Error },
+
+        #[snafu(display("Logger setup error: {}", source))]
+        Logger { source: log::SetLoggerError },
     }
 }
 
@@ -173,12 +176,16 @@ async fn generate_max_pods(
     client: &mut ImdsClient,
     aws_k8s_info: &mut SettingsViewDelta,
 ) -> Result<()> {
+    print!("generate_max_pods::start");
     if settings_view_get!(aws_k8s_info.kubernetes.max_pods).is_some() {
+        print!("generate_max_pods::already set");
         return Ok(());
     }
     if let Ok(max_pods) = get_max_pods(client).await {
+        print!("generate_max_pods::setting value in settings");
         settings_view_set!(aws_k8s_info.kubernetes.max_pods = max_pods);
     }
+    print!("generate_max_pods::done");
     Ok(())
 }
 
@@ -233,6 +240,7 @@ async fn generate_cluster_dns_ip(
     }
 
     // Retrieve the kubernetes network configuration for the EKS cluster
+    print!("generate_cluster_dns_ip::retrieving EKS network configuration");
     let ip_addr = if let Some(ip) = get_eks_network_config(aws_k8s_info).await? {
         ip.clone()
     } else {
@@ -254,10 +262,12 @@ async fn generate_cluster_dns_ip(
 /// Retrieves the ip address from the kubernetes network configuration for the
 /// EKS Cluster
 async fn get_eks_network_config(aws_k8s_info: &SettingsViewDelta) -> Result<Option<String>> {
+    print!("get_eks_network_config::start");
     if let (Some(region), Some(cluster_name)) = (
         settings_view_get!(aws_k8s_info.aws.region),
         settings_view_get!(aws_k8s_info.kubernetes.cluster_name),
     ) {
+        print!("get_eks_network_config::getting cluster network config");
         if let Ok(config) = eks::get_cluster_network_config(
             region,
             cluster_name,
@@ -488,23 +498,41 @@ fn set_aws_config(aws_k8s_info: &SettingsViewDelta, filepath: &Path) -> Result<(
 }
 
 async fn run() -> Result<()> {
+    // SimpleLogger will send errors to stderr and anything less to stdout.
+    //SimpleLogger::init(LevelFilter::Debug, LogConfig::default()).context(error::LoggerSnafu)?;
+
+    print!("Starting pluto");
+
+    print!("Creating IMDS client");
     let mut client = ImdsClient::new();
+    print!("Getting EKS metadata from bottlerocket api");
     let current_settings = api::get_aws_k8s_info().await.context(error::AwsInfoSnafu)?;
     let mut aws_k8s_info = SettingsViewDelta::from_api_response(current_settings);
+    //print!("aws_k8s_info {:?}", aws_k8s_info);
 
+
+
+    print!("Installing AWS_LC cryptographic provider");
     let _ = rustls::crypto::aws_lc_rs::default_provider().install_default();
 
+    print!("Creating temporary directory");
     let temp_dir = tempfile::tempdir().context(error::TempdirSnafu)?;
     let aws_config_file_path = temp_dir.path().join(AWS_CONFIG_FILE);
     set_aws_config(&aws_k8s_info, Path::new(&aws_config_file_path))?;
 
+    print!("Generating cluster DNS IP");
     generate_cluster_dns_ip(&mut client, &mut aws_k8s_info).await?;
+    print!("Generating node IP");
     generate_node_ip(&mut client, &mut aws_k8s_info).await?;
+    print!("Generating max modes");
     generate_max_pods(&mut client, &mut aws_k8s_info).await?;
+    print!("Generating provider ID");
     generate_provider_id(&mut client, &mut aws_k8s_info).await?;
+    print!("Generating node name");
     generate_node_name(&mut client, &mut aws_k8s_info).await?;
 
     if let Some(k8s_settings) = &aws_k8s_info.delta().kubernetes {
+        print!("There are kubernetes settings to update");
         let generated_settings = serde_json::json!({
             "kubernetes": serde_json::to_value(k8s_settings).context(error::SerializeSnafu)?
         });
@@ -514,11 +542,13 @@ async fn run() -> Result<()> {
             constants::API_SETTINGS_URI,
             constants::LAUNCH_TRANSACTION
         );
+        print!("Running API call with data {}", json_str.as_str());
         api::client_command(&["raw", "-m", "PATCH", "-u", uri, "-d", json_str.as_str()])
             .await
             .context(error::SetFailureSnafu)?;
     }
 
+    print!("Pluto run finished");
     Ok(())
 }
 
@@ -528,9 +558,11 @@ async fn run() -> Result<()> {
 #[tokio::main]
 async fn main() {
     if let Err(e) = run().await {
+        print!("Pluto main encountered error");
         eprintln!("{}", e);
         process::exit(1);
     }
+    print!("Pluto main finished");
 }
 
 #[cfg(test)]
