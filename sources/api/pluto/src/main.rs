@@ -51,7 +51,7 @@ use std::path::Path;
 use std::str::FromStr;
 use std::string::String;
 use std::{env, process};
-use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
+// use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 
 // This is the default DNS unless our CIDR block begins with "10."
 const DEFAULT_DNS_CLUSTER_IP: &str = "10.100.0.10";
@@ -502,7 +502,7 @@ fn set_aws_config(aws_k8s_info: &SettingsViewDelta, filepath: &Path) -> Result<(
 
 async fn run() -> Result<()> {
     // SimpleLogger will send errors to stderr and anything less to stdout.
-    SimpleLogger::init(LevelFilter::Debug, LogConfig::default()).context(error::LoggerSnafu)?;
+    //SimpleLogger::init(LevelFilter::Debug, LogConfig::default()).context(error::LoggerSnafu)?;
 
     //info!("Starting pluto");
 
