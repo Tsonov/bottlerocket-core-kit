@@ -166,8 +166,8 @@ mod error {
         #[snafu(display("Unable to create tempdir: {}", source))]
         Tempdir { source: std::io::Error },
 
-        #[snafu(display("Logger setup error: {}", source))]
-        Logger { source: log::SetLoggerError },
+        // #[snafu(display("Logger setup error: {}", source))]
+        // Logger { source: log::SetLoggerError },
     }
 }
 
