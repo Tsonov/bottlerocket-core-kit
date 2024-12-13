@@ -118,7 +118,7 @@ struct Args {
 impl Default for Args {
     fn default() -> Self {
         Self {
-            log_level: LevelFilter::Info,
+            log_level: LevelFilter::Debug,
             config_path: PathBuf::from_str(DEFAULT_CONFIG_PATH).unwrap(),
         }
     }

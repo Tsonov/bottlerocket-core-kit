@@ -111,7 +111,7 @@ fn parse_args(args: std::env::Args) -> Args {
 
     Args {
         subcommand: subcommand.unwrap_or_else(|| usage()),
-        log_level: log_level.unwrap_or(LevelFilter::Info),
+        log_level: log_level.unwrap_or(LevelFilter::Debug),
         config_path: config_path.unwrap_or_else(|| PathBuf::from(DEFAULT_CONFIG_FILE)),
     }
 }
