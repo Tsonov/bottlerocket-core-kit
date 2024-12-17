@@ -61,8 +61,8 @@ where
     .cluster
     .context(MissingSnafu { field: "cluster" })?
     .kubernetes_network_config
-    .inspect_err(|err|{
-        println!("get_cluster_network_config::error in extracting network config {}", err);
+    .inspect(|config| {
+        printl!("get_cluster_network_config::got config {}", config);
     })
     .context(MissingSnafu {
         field: "kubernetes_network_config",
@@ -81,7 +81,8 @@ where
     println!("build_client::start");
     let http_client = if let Some(https_proxy) = https_proxy {
         let https_proxy = https_proxy.as_ref().to_string();
-        println!("build_client::http_client with proxy vals https_proxy {}, no_proxy {}", https_proxy, no_proxy);
+
+        println!("build_client::http_client with proxy vals https_proxy {}, no_proxy {:?}", https_proxy, no_proxy);
         HyperClientBuilder::new()
             .crypto_mode(PROVIDER)
             .build_with_proxy(https_proxy, no_proxy)
@@ -91,13 +92,13 @@ where
             .crypto_mode(PROVIDER)
             .build_https()
     };
-    println!("build_client::aws_config {}", config);
+    println!("build_client::aws_config {:?}", config);
     let eks_config = aws_sdk_eks::config::Builder::from(&config)
         .http_client(http_client)
         .build();
 
-    println!("build_client::eks_config {}", eks_config);
-
-    Ok(aws_sdk_eks::Client::from_conf(eks_config));
+    println!("build_client::eks_config {:?}", eks_config);
+    
     println!("build_client::end");
+    Ok(aws_sdk_eks::Client::from_conf(eks_config));
 }
