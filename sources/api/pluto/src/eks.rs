@@ -84,10 +84,15 @@ where
         None => &[] as &[N],
     };
 
+    let no_proxy_str = no_proxy_raw.iter()
+            .map(|item| item.as_ref()) // Convert each item to &str
+            .collect::<Vec<_>>()       // Collect into a Vec<&str>
+            .join(", ");               // Join with a delimiter (e.g., ", ")
+
     let http_client = if let Some(https_proxy) = https_proxy {
         let https_proxy = https_proxy.as_ref().to_string();
 
-        println!("build_client::http_client with proxy vals https_proxy {}, no_proxy {:?}", https_proxy, no_proxy_raw);
+        println!("build_client::http_client with proxy vals https_proxy {}, no_proxy {:?}", https_proxy, no_proxy_str);
         HyperClientBuilder::new()
             .crypto_mode(PROVIDER)
             .build_with_proxy(https_proxy, no_proxy)
