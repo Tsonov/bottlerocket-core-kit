@@ -42,7 +42,7 @@ where
 {
     println!("get_cluster_network_config::start");
     let config = sdk_config(region).await;
-    println!("get_cluster_network_config::got config {}", config);
+    println!("get_cluster_network_config::got sdk config {:?}", config);
 
     let client = build_client(https_proxy, no_proxy, config)?;
     println!("get_cluster_network_config::client created");
@@ -62,7 +62,7 @@ where
     .context(MissingSnafu { field: "cluster" })?
     .kubernetes_network_config
     .inspect(|config| {
-        printl!("get_cluster_network_config::got config {}", config);
+        println!("get_cluster_network_config::got k8s network config {:?}", config);
     })
     .context(MissingSnafu {
         field: "kubernetes_network_config",
@@ -79,10 +79,15 @@ where
     N: AsRef<str>,
 {
     println!("build_client::start");
+    let no_proxy_raw = match no_proxy {
+        Some(v) => v,
+        None => ""
+    }
+
     let http_client = if let Some(https_proxy) = https_proxy {
         let https_proxy = https_proxy.as_ref().to_string();
 
-        println!("build_client::http_client with proxy vals https_proxy {}, no_proxy {:?}", https_proxy, no_proxy);
+        println!("build_client::http_client with proxy vals https_proxy {}, no_proxy {:?}", https_proxy, no_proxy_raw);
         HyperClientBuilder::new()
             .crypto_mode(PROVIDER)
             .build_with_proxy(https_proxy, no_proxy)
@@ -98,7 +103,7 @@ where
         .build();
 
     println!("build_client::eks_config {:?}", eks_config);
-    
+
     println!("build_client::end");
-    Ok(aws_sdk_eks::Client::from_conf(eks_config));
+    Ok(aws_sdk_eks::Client::from_conf(eks_config))
 }
