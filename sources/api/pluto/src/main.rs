@@ -232,7 +232,7 @@ async fn generate_cluster_dns_ip(
     client: &mut ImdsClient,
     aws_k8s_info: &mut SettingsViewDelta,
 ) -> Result<()> {
-    if settings_view_get!(aws_k8s_info.kubernetes.  ).is_some() {
+    if settings_view_get!(aws_k8s_info.kubernetes.cluster_dns_ip).is_some() {
         return Ok(());
     }
 
@@ -273,7 +273,7 @@ async fn get_eks_network_config(aws_k8s_info: &SettingsViewDelta) -> Result<Opti
         )
         .await
         .inspect_err(|err| {
-            println!("get_eks_network_config::error in call", err);
+            println!("get_eks_network_config::error in call {}", err);
         })
         .context(error::EksSnafu)
         {
@@ -281,7 +281,7 @@ async fn get_eks_network_config(aws_k8s_info: &SettingsViewDelta) -> Result<Opti
             // Derive cluster-dns-ip from the service IPv4 CIDR
             if let Some(ipv4_cidr) = config.service_ipv4_cidr {
                 if let Ok(dns_ip) = get_dns_from_ipv4_cidr(&ipv4_cidr) {
-                    println!("get_eks_network_config::got dns_ip from CIDR", dns_ip);
+                    println!("get_eks_network_config::got dns_ip from CIDR {}", dns_ip);
                     return Ok(Some(dns_ip));
                 }
             }
