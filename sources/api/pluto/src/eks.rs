@@ -81,8 +81,8 @@ where
     println!("build_client::start");
     let no_proxy_raw = match no_proxy {
         Some(v) => v,
-        None => ""
-    }
+        None => &[] as &[N],
+    };
 
     let http_client = if let Some(https_proxy) = https_proxy {
         let https_proxy = https_proxy.as_ref().to_string();
